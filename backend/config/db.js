@@ -8,6 +8,13 @@ const database =
     ? 'support_tickets_test'
     : (process.env.DB_NAME || 'support_tickets');
 
+// Enable SSL for hosted MySQL providers such as Aiven.
+// Local development remains unchanged.
+const ssl =
+  process.env.DB_SSL === 'true'
+    ? { rejectUnauthorized: false }
+    : undefined;
+
 // Central MySQL connection pool.
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
@@ -18,6 +25,7 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  ssl,
 });
 
 module.exports = pool;
