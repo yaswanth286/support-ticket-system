@@ -27,28 +27,37 @@ async function createTicket({ userId, subject, description, priority }) {
  * Returns tickets, joined with customer + assigned agent info.
  * Customers only see their own tickets; agents can see all, with optional filters.
  */
-async function listTickets({ role, userId, status, priority }) {
+async function listTickets({ role, userId, email, status, priority }) {
   const conditions = [];
   const params = [];
 
   if (role === 'customer') {
     conditions.push('t.user_id = ?');
     params.push(userId);
+  } else if (role === 'agent' && email !== 'agent@example.com') {
+    conditions.push('t.assigned_to = ?');
+    params.push(userId);
   }
+
   if (status) {
     conditions.push('t.status = ?');
     params.push(status);
   }
+
   if (priority) {
     conditions.push('t.priority = ?');
     params.push(priority);
   }
 
-  const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  const whereClause = conditions.length
+    ? `WHERE ${conditions.join(' AND ')}`
+    : '';
+
   const [rows] = await pool.query(
     `${BASE_SELECT} ${whereClause} ORDER BY t.created_at DESC`,
     params
   );
+
   return rows;
 }
 

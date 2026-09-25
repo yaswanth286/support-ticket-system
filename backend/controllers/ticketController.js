@@ -45,12 +45,13 @@ async function getTickets(req, res, next) {
       return res.status(400).json({ success: false, message: 'Invalid priority filter' });
     }
 
-    const tickets = await ticketService.listTickets({
-      role: req.user.role,
-      userId: req.user.id,
-      status,
-      priority,
-    });
+const tickets = await ticketService.listTickets({
+  role: req.user.role,
+  userId: req.user.id,
+  email: req.user.email,
+  status,
+  priority,
+});
 
     return res.status(200).json({ success: true, data: tickets });
   } catch (err) {
@@ -107,17 +108,30 @@ async function updateTicket(req, res, next) {
       updates.priority = priority;
     }
 
-    if (assignedTo !== undefined) {
-      if (assignedTo === null) {
-        updates.assigned_to = null;
-      } else {
-        const agent = await userService.findById(assignedTo);
-        if (!agent || agent.role !== 'agent') {
-          return res.status(400).json({ success: false, message: 'Tickets can only be assigned to a valid agent' });
-        }
-        updates.assigned_to = agent.id;
-      }
+if (assignedTo !== undefined) {
+  // Only the admin agent can assign or reassign tickets.
+  if (req.user.email !== 'agent@example.com') {
+    return res.status(403).json({
+      success: false,
+      message: 'Only the admin agent can assign tickets',
+    });
+  }
+
+  if (assignedTo === null) {
+    updates.assigned_to = null;
+  } else {
+    const agent = await userService.findById(assignedTo);
+
+    if (!agent || agent.role !== 'agent') {
+      return res.status(400).json({
+        success: false,
+        message: 'Tickets can only be assigned to a valid agent',
+      });
     }
+
+    updates.assigned_to = agent.id;
+  }
+}
 
     const updatedTicket = await ticketService.updateTicket(req.params.id, updates);
     return res.status(200).json({ success: true, data: updatedTicket });
