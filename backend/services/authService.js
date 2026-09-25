@@ -13,9 +13,17 @@ async function comparePassword(plainPassword, passwordHash) {
 }
 
 function generateToken(user) {
-  return jwt.sign({ id: user.id, role: user.role }, jwtConfig.secret, {
-    expiresIn: jwtConfig.expiresIn,
-  });
+  return jwt.sign(
+    {
+      id: user.id,
+      role: user.role,
+      email: user.email,
+    },
+    jwtConfig.secret,
+    {
+      expiresIn: jwtConfig.expiresIn,
+    }
+  );
 }
 
 module.exports = { hashPassword, comparePassword, generateToken };

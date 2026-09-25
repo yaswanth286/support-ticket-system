@@ -21,7 +21,11 @@ function authenticate(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, jwtConfig.secret);
-    req.user = { id: decoded.id, role: decoded.role };
+req.user = {
+  id: decoded.id,
+  role: decoded.role,
+  email: decoded.email,
+};
     return next();
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
